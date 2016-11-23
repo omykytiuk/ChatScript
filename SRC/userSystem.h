@@ -16,8 +16,8 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 
 #define MAX_USED 30 // we want to track 20, keeping 10 available for new input from user
 
-#define SAID_LIMIT 1000
-extern char chatbotSaid[MAX_USED+1][SAID_LIMIT+3]; // last n messages sent to user 
+#define SAID_LIMIT 10000
+extern char chatbotSaid[MAX_USED+1][SAID_LIMIT+3]; // last n messages sent to user
 extern char humanSaid[MAX_USED+1][SAID_LIMIT+3]; //   last n messages read from human
 extern int humanSaidIndex;
 extern int chatbotSaidIndex;
