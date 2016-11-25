@@ -71,7 +71,7 @@ ev_io ev_accept_r_g;
 ev_timer tt_g;
 
 bool postgresInited = false;
-	   
+
 #ifdef EVSERVER_FORK
 // child monitors
 #define MAX_CHILDREN_D 50
@@ -125,7 +125,7 @@ struct Client_t
         if (ev_is_active(&this->ev_w))  ev_io_stop(this->l, &this->ev_w);
         close(this->fd);
     }
-    
+
     void prepare_for_next_request()
     {
         this->incomming.clear();
@@ -176,7 +176,7 @@ struct Client_t
         // try to send, if we get eagain error, schedule it for later
         int r = send(this->fd, this->data, len, 0);
 
-        if (r < 0) 
+        if (r < 0)
 		{
             if (errno == EAGAIN)
             {
@@ -188,7 +188,7 @@ struct Client_t
             return -1;
         }
 
-        if (r < (int)len) 
+        if (r < (int)len)
 		{
             ev_io_start(this->l, &this->ev_w);
 			memmove(data,data+r,(len-r) + HIDDEN_OVERLAP);
@@ -205,7 +205,7 @@ struct Client_t
     {
         *this->data = 0;
         this->ip = this->get_foreign_address();
-        if (this->ip.length() == 0) 
+        if (this->ip.length() == 0)
 		{
             Log(SERVERLOG, "evserver: prepare_for_chat() could not get ip for client: %d\r\n", this->fd);
             return -1;
@@ -236,7 +236,7 @@ struct Client_t
 
         // since we received complete request, we will stop reading from client socket until we process it
         ev_io_stop(this->l, &this->ev_r);
-        
+
         return 1;
     }
 };
@@ -259,7 +259,7 @@ static int setnonblocking(int fd)
         Log(SERVERLOG, "evserver: setnonblocking() fcntl(F_GETFL) failed, errno: %s\r\n", strerror(errno));
         return -1;
     }
-    if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1) 
+    if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
 	{
         Log(SERVERLOG, "evserver: setnonblocking() fcntl(F_SETFL) failed, errno: %s\r\n", strerror(errno));
         return -1;
@@ -272,19 +272,19 @@ int fork_child(ev_child *child_watcher = 0)
 {
     string curDir;
     pid_t pid = 0;
-  
+
     pid = fork();
     if (pid < 0) {
 		Log(SERVERLOG, "evserver: fork failed, errno %d\r\n", errno);
         return -1;
     }
- 
+
     if (pid > 0) {
         // parent
         if (!child_watcher) {
             child_watcher = &children_g[cur_children_g];
             cur_children_g++;
-        } 
+        }
 		else   ev_child_stop(l_g, child_watcher);
 
         ev_child_init(child_watcher, evsrv_child_died, pid, 0);
@@ -301,7 +301,7 @@ int fork_child(ev_child *child_watcher = 0)
     for (int i = 0; i < cur_children_g; i++)   ev_child_stop(l_g, &children_g[i]);
     cur_children_g = 0;
     parent_g = false;
-    
+
     return 1;
 }
 
@@ -315,7 +315,7 @@ static void evsrv_child_died(EV_P_ ev_child *w, int revents) {
 
 // init server
 int evsrv_init(const string &interfaceKind, int port, char* arg) {
-    if (srv_socket_g != -1) 
+    if (srv_socket_g != -1)
 	{
         ReportBug((char*)"evserver: server already initialized\r\n")
         return -1;
@@ -324,7 +324,7 @@ int evsrv_init(const string &interfaceKind, int port, char* arg) {
         // parse additional arguments
         // cut evsrv:
         string args(arg + 6);
-    
+
         // parms are split by ','
 
         const char *s = args.c_str();
@@ -347,15 +347,15 @@ int evsrv_init(const string &interfaceKind, int port, char* arg) {
 					no_children_g = atoi(val.c_str());
                     if (no_children_g > MAX_CHILDREN_D)  no_children_g = MAX_CHILDREN_D;
                 }
-            } 
+            }
 			else  ReportBug((char*)"Invalid argument to evserver: '%s'\r\n", command.c_str());
 
-            if (e) 
+            if (e)
 			{
                 s = e + 1;
                 if (!*s) break;
                 e = strchr(e + 1, ',');
-            } 
+            }
 			else break;
         }
     }
@@ -367,7 +367,7 @@ int evsrv_init(const string &interfaceKind, int port, char* arg) {
     l_g = EV_DEFAULT;
 
 #ifdef WIN32
-	if (InitWinSock() == FAILRULE_BIT) 
+	if (InitWinSock() == FAILRULE_BIT)
 	{
         Log(SERVERLOG, "evsrv_init: WSAStartup failed\r\n");
         return -1;
@@ -375,7 +375,7 @@ int evsrv_init(const string &interfaceKind, int port, char* arg) {
 #endif
 
     srv_socket_g = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-    
+
     if (srv_socket_g < 0) {
         Log(SERVERLOG, "evsrv_init: socket() failed, errno: %s\r\n", strerror(errno));
         return -1;
@@ -387,9 +387,9 @@ int evsrv_init(const string &interfaceKind, int port, char* arg) {
 #else
 	setsockopt(srv_socket_g, SOL_SOCKET, SO_REUSEADDR, (void*) &on, sizeof(on));
 #endif
-    
+
     // non blocking
-    if (setnonblocking(srv_socket_g) == -1)  
+    if (setnonblocking(srv_socket_g) == -1)
 	{
 		Log(SERVERLOG, "evsrv_init: non-blocking ending init\r\n");
  		return -1;
@@ -403,8 +403,8 @@ int evsrv_init(const string &interfaceKind, int port, char* arg) {
         return -1;
     }
 	localAddr.sin_port = htons(port_g);
-    
-	if (bind(srv_socket_g, (sockaddr *) &localAddr, sizeof(sockaddr_in)) < 0) 
+
+	if (bind(srv_socket_g, (sockaddr *) &localAddr, sizeof(sockaddr_in)) < 0)
 	{
  		return -1; // typical when server is already running and cron tries to start
 	}
@@ -429,7 +429,7 @@ int evsrv_init(const string &interfaceKind, int port, char* arg) {
                 Log(SERVERLOG, "  evserver: child %d alive\r\n", getpid());
 				serverLog = oldserverlog;
                 break;
-            } 
+            }
 			else  parent_after_fork = 1;
         }
     }
@@ -459,7 +459,7 @@ int evsrv_init(const string &interfaceKind, int port, char* arg) {
 // starts main server loop
 int evsrv_run()
 {
-    if (!l_g) 
+    if (!l_g)
 	{
         ReportBug((char*)"evsrv_run() called with no ev loop initialized\r\n")
         printf((char*)"no ev loop initialized, nothing to do\r\n");
@@ -478,7 +478,7 @@ static void evsrv_accept(EV_P_ ev_io *w, int revents)
     int fd = -1;
     struct sockaddr_storage addr;
     socklen_t sock_len = sizeof(addr);
- 
+
     // try to accept as many connections as possible
     while (true)
     {
@@ -571,14 +571,14 @@ void LogChat(clock_t starttime,char* user,char* bot,char* IP, int turn,char* inp
 
 int evsrv_do_chat(Client_t *client)
 {
- 	clock_t starttime = ElapsedMilliseconds(); 
+ 	clock_t starttime = ElapsedMilliseconds();
     client->prepare_for_chat();
 	size_t len = strlen(client->message);
 	if (len >= MAX_BUFFER_SIZE - 100) client->message[MAX_BUFFER_SIZE-1] = 0;
 	echo = false;
 	bool restarted = false;
 #ifndef DISCARDPOSTGRES
-	if (postgresparams && !postgresInited)  
+	if (postgresparams && !postgresInited)
 	{
 		PGUserFilesCode(); //Forked must hook uniquely AFTER forking
 		postgresInited = true;
@@ -604,8 +604,8 @@ RESTART_RETRY:
 		*client->data = 0;
 		goto RESTART_RETRY;
 	}
-		
-	if (*client->data == 0) 
+
+	if (*client->data == 0)
 	{
 		client->data[0] = ' ';
 		client->data[1] = 0;
@@ -613,9 +613,9 @@ RESTART_RETRY:
 		client->data[3] = 0xff;
 		client->data[4] = 0;	// null terminate hidden why data after room for positive ctrlz
 	}
-	
+
 #ifndef DISCARDPOSTGRES
-		if (false && postgresparams && postgresInited)  // try to keep going per child
+		if (postgresparams && postgresInited)  // try to keep going per child
 		{
 			PostgresShutDown(); // any script connection
 			PGUserFilesCloseCode();	// filesystem
@@ -627,4 +627,4 @@ RESTART_RETRY:
 }
 
 #endif /* EVSERVER */
-#endif 
+#endif
